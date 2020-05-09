@@ -1,0 +1,88 @@
+body {
+	margin: 0px;
+	padding: 0px;
+}
+
+.toolbar {
+	height: 32px;
+	width: 100%;
+	font-size: 16px;
+	background-color: darkgrey;
+}
+.toolbar *{
+	vertical-align: middle;
+	margin-top: 4px;
+}
+button{
+	border-radius: 4px;
+}
+.toolbar input {	
+	border-radius: 4px;
+}
+
+.frame{
+	position: absolute;
+	top: 32px;
+	bottom: 0px;
+	width: 100%;
+	overflow-y: hidden;
+	overflow-x: scroll;
+}
+
+.frame.vscode-dark{
+	background-color:#333;
+}
+.frame.vscode-light{
+	background-color:#eee;
+}
+
+#scroll {
+	position: absolute;
+	top: 32px;
+	bottom: 0px;
+	width: 100%;
+	overflow-y: scroll;
+}
+
+.tbl{
+	font-family: Consolas;
+	font-size: 16px;
+	
+}
+.tbl.vscode-dark{
+	color: #fff;
+}
+.tbl.vscode-light{
+	color: #000;
+}
+
+.tbl td:first-child {
+	background: rgba(133, 133, 133, 0.4);
+}
+
+.tbl tr:first-child {
+	background: rgba(131, 131, 131, 0.4);
+}
+select{
+	border-radius: 4px;
+	width: 70px;
+	font-family: sans-serif;
+	background: #eee;
+}
+
+input[type=checkbox] {
+	display: inline-block;
+	vertical-align: middle;
+	font-family: sans-serif;
+}
+label {
+	user-select: none;
+}
+table pre {
+	display: inline;
+	font-family: Consolas;
+	font-size: 16px;
+}
+.smallFont {
+	font-size: 14px;
+}
