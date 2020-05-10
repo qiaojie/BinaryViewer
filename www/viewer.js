@@ -7,8 +7,9 @@ var DataType = {
 	int8: 4,
 	int16: 5,
 	int32: 6,
-	float32: 7,
-	float64: 8
+	int64: 7,
+	float32: 8,
+	float64: 9
 }
 function padding(s, n) {
 	if (n <= s.length)
@@ -24,12 +25,14 @@ function spacepadding(s, n, last) {
 		s = s[0] == "-" ? s + " " : " " + s;	
 	return s;
 }
-function addRow(html) {
+function addRow(html, idx) {
 	var tr = $("#table tr:last");
 	if (tr.length == 0) {
 		return;
 	}
-	tr.after(html);
+	var t = tr.after(html)[0];
+	t.cells[1].cellIdx = [idx, 0];
+	t.cells[2].cellIdx = [idx, 1];
 }
 function fillRow(row, pos, s0, s1, type, data) {
 	var tr = $(`#table tr`);
@@ -55,7 +58,7 @@ function resizeRow(count) {
 	//console.log("resizeRow", count);
 	var len = $("#table tr:not(:first)").length;
 	for (var i = len; i < count; i++)
-		addRow("<tr><td></td><td></td><td></td><td></td><td></td></tr>");
+		addRow("<tr><td></td><td></td><td></td><td></td><td></td></tr>", i - 1);
 }
 
 var rowHeight = $("#table tr")[1].clientHeight;
@@ -150,7 +153,7 @@ function getViewData(start, end, type) {
 			break;
 		case DataType.int64:
 			for (i = start; i < end - 7; i += 8)
-				s += (unsigned ? dataView.getUint64(i, littleEndian) : dataView.getInt64(i, littleEndian)) + " ";
+				s += spacepadding(readBigInt(dataView, i, littleEndian, unsigned), 22);
 			break;
 		case DataType.float32:
 			for (i = start; i < end - 3; i += 4)
@@ -255,6 +258,85 @@ $("#rel_btn").on("click", function () {
 	var scroll = $("#scroll")[0];
 	scroll.scrollTop = ((position & ~15)>> 4) * rowHeight;
 	getData(rowCount);
+});
+
+function readBigInt(dataView, offset, littleEndian, unsigned){
+	if (littleEndian){
+		var low = BigInt(dataView.getUint32(offset, true));
+		var high = BigInt(dataView.getUint32(offset + 4, true));
+		var n = (high << 32n) | low;
+		if(!unsigned)
+			n = BigInt.asIntN(64, n);
+	}
+	else {
+		var high = BigInt(dataView.getUint32(offset, false));
+		var low = BigInt(dataView.getUint32(offset + 4, false));
+		var n = (high << 32n) | low;
+		if (!unsigned)
+			n = BigInt.asIntN(64, n);
+	}
+	return n;
+}
+
+var lastPos = -1;
+$("#table").on("mousemove", function(e){
+	var t = e.target;
+	var offset = e.offsetX;
+	if (t.cellIdx){
+		var i = (8.6 * offset / t.clientWidth) | 0;
+		var p = t.cellIdx[0] * 16 + t.cellIdx[1] * 8 + i;
+		if(p == lastPos)
+			return;
+		if(i < 8 && p < bytes.length && p >= 0) {
+			lastPos = p;
+			var y = t.offsetTop + 60;
+			var x = t.offsetLeft + i * (t.clientWidth - 10) / 8 - 12;
+			var frame = $(".frame")[0];
+			var inspector = $("#inspector");
+			var data = new Array(...bytes.slice(p, p + 8)).map(function (t) { var n = parseInt(t); return padding(n.toString(16), 2) });
+			$("#address")[0].innerText = " address: " + padding((position + p).toString(16), 8) + " data: " + data.join(" ");
+			if (y > frame.clientHeight - 100){
+				inspector.css({ display: "block", bottom: frame.clientHeight - t.offsetTop + 20, top: "auto", left: x });
+				inspector.attr("class", "downArrow");
+			}
+			else{
+				inspector.css({ display: "block", top: y, left: x, bottom: "auto"});
+				inspector.attr("class", "upArrow");
+			}
+			var dataView = new DataView(bytes.buffer);
+			var littleEndian = !$("#bigendian").is(':checked');
+			var unsigned = $("#unsigned").is(':checked');
+			$("#int8")[0].innerText = unsigned ? bytes[p] : dataView.getInt8(p);
+			if(p < bytes.length - 1)
+				$("#int16")[0].innerText = unsigned ? dataView.getUint16(p, littleEndian) : dataView.getInt16(p, littleEndian);
+			else
+				$("#int16")[0].innerText = "";
+			if (p < bytes.length - 3){
+				$("#int32")[0].innerText = unsigned ? dataView.getUint32(p, littleEndian) : dataView.getInt32(p, littleEndian);
+				$("#float32")[0].innerText = dataView.getFloat32(p).toPrecision(8);
+			}
+			else{
+				$("#int32")[0].innerText = ""
+				$("#float32")[0].innerText = "";
+			}
+			if (p < bytes.length - 5) {
+				$("#int64")[0].innerText = readBigInt(dataView, p, littleEndian, unsigned).toString();
+				$("#float64")[0].innerText = dataView.getFloat64(p);
+			}
+			else{
+				$("#float64")[0].innerText = "";
+				$("#int64")[0].innerText = "";
+			}
+			return;
+		}
+	}
+	lastPos = -1;
+	$("#inspector").css("display", "none");
+});
+
+$("#table").on("mouseleave", function(){
+	lastPos = -1;
+	//$("#inspector").css("display", "none");
 });
 
 $("#scroll span").css("height", rowHeight * (totalSize + 32) >> 4);

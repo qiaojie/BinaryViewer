@@ -3,10 +3,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 export function activate(context: vscode.ExtensionContext) {
-	console.log("binaryView activate");
+	//console.log("binaryView activate");
 
 	let binaryView = vscode.commands.registerCommand('extension.binaryView', (uri: vscode.Uri | undefined) => {
-		console.log("open aaa", uri);
 		uri = uri || vscode.window.activeTextEditor?.document.uri;
 		if (!uri)
 			return;
@@ -31,7 +30,7 @@ export function activate(context: vscode.ExtensionContext) {
 			return panel.webview.asWebviewUri(vscode.Uri.file(`${extPath}/www/${res}`));
 		}
 		panel.webview.onDidReceiveMessage(e => {
-			console.log(e);
+			//console.log(e);
 			var len = e.end - e.start;
 			let buf = new Uint8Array(len);
 			fs.readSync(fd, buf, 0, len, e.start);
@@ -72,10 +71,10 @@ export function activate(context: vscode.ExtensionContext) {
 							<option value="4">int8</option>
 							<option value="5">int16</option>
 							<option value="6">int32</option>
-							<option value="7">float32</option>
-							<option value="8">float64</option>
-							<!--<option value="4">GBK</option>
-							<option value="10">int64</option>-->
+							<option value="7">int64</option>
+							<option value="8">float32</option>
+							<option value="9">float64</option>
+							<!--<option value="10">GBK</option>-->
 						</select>
 						<input type="checkbox" id="unsigned"><label for="unsigned">unsigned</label>
 						<input type="checkbox" id="bigendian"><label for="bigendian">bigendian</label>
@@ -85,10 +84,21 @@ export function activate(context: vscode.ExtensionContext) {
 			</table>
 		</div>
 	</div>
+	<div id="inspector" style="display: none;">
+		<div style="text-align:right; margin: 6px;">Number inspector</div>
+		<div id="address"> address: </div>
+		<div class="item"><div class="item-name">int8: </div><span id="int8"></span></div>
+		<div class="item"><div class="item-name">int16: </div><span id="int16"></span></div>
+		<div class="item"><div class="item-name">int32: </div><span id="int32"></span></div>
+		<div class="item"><div class="item-name">int64: </div><span id="int64"></span></div>
+		<div class="item"><div class="item-name">float32: </div><span id="float32"></span></div>
+		<div class="item"><div class="item-name">float64: </div><span id="float64"></span></div>
+		</div>
+	</div>
 	<script src="${getUri('viewer.js')}"></script>
 </body>
 </html>`;
-		console.log(html);
+		//console.log(html);
 		panel.webview.html = html;
 	});
 
